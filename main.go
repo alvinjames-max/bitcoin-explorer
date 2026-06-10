@@ -159,6 +159,27 @@ func showBlock(blockhash string) error {
 	return nil
 }
 
+// Bonus: Show UTXO set for a wallet
+func showUTXOs(wallet string) error {
+	_ = rpc("loadwallet", []any{wallet}, "", nil)
+	var utxos []struct {
+		TxID          string  `json:"txid"`
+		Vout          int     `json:"vout"`
+		Amount        float64 `json:"amount"`
+		Confirmations int     `json:"confirmations"`
+		Address       string  `json:"address"`
+	}
+	if err := rpc("listunspent", nil, wallet, &utxos); err != nil {
+		return err
+	}
+	fmt.Printf("=== UTXOs: %s ===\n", wallet)
+	for _, u := range utxos {
+		fmt.Printf("  %.8f BTC | %d confs\n", u.Amount, u.Confirmations)
+		fmt.Printf("  TXID: %s\n", u.TxID)
+	}
+	return nil
+}
+
 func main() {
 	fmt.Println("Bitcoin Explorer")
 	fmt.Println("================")
@@ -184,6 +205,11 @@ func main() {
 	fmt.Println()
 
 	if err := showBlock(""); err != nil {
+		fmt.Println("Error:", err)
+	}
+	fmt.Println()
+
+	if err := showUTXOs("alice"); err != nil {
 		fmt.Println("Error:", err)
 	}
 }
